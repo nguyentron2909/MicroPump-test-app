@@ -1,0 +1,27 @@
+<resources lang="en-US">
+    <string name="app_name">MicroPump_test</string>
+    <!--Main layout strings -->
+    <string name="tvrate">Rate:</string>
+    <string name="tvtarget">Target:</string>
+    <string name="tvsyringe">Syringe:</string>
+    <string name="tvmode">Mode:</string>
+    <string name="tvtime_left">Time left:</string>
+    <string name="tvrate_unit">µl/min</string>
+    <string name="tvtarget_unit">ml</string>
+    <string name="button_start">Start</string>
+    <string name="button_stop">Stop</string>
+
+    <!--Spinner string arrays-->
+    <string-array name="Syringe_type">
+        <item>1ml</item>
+        <item>3ml</item>
+        <item>5ml</item>
+        <item>10ml</item>
+    </string-array>
+
+    <string-array name="Operation_mode">
+        <item>Infuse</item>
+        <item>Withdraw</item>
+    </string-array>
+
+</resources>

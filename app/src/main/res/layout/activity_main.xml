@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/tvPumpSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="72dp"
+        android:layout_marginTop="128dp"
+        android:text="@string/tvrate"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvPumpVolume"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="@string/tvtarget"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintEnd_toEndOf="@+id/tvPumpSpeed"
+        app:layout_constraintTop_toBottomOf="@+id/tvPumpSpeed" />
+
+    <TextView
+        android:id="@+id/tvSyringeType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="@string/tvsyringe"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintEnd_toEndOf="@+id/tvPumpVolume"
+        app:layout_constraintTop_toBottomOf="@+id/tvPumpVolume" />
+
+    <TextView
+        android:id="@+id/tvOperationMode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="@string/tvmode"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintEnd_toEndOf="@+id/tvSyringeType"
+        app:layout_constraintTop_toBottomOf="@+id/tvSyringeType" />
+
+    <TextView
+        android:id="@+id/tvPumpTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="@string/tvtime_left"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintEnd_toEndOf="@+id/tvOperationMode"
+        app:layout_constraintTop_toBottomOf="@+id/tvOperationMode" />
+
+    <TextView
+        android:id="@+id/tvSpeedUnit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:text="@string/tvrate_unit"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintBottom_toBottomOf="@+id/tvPumpSpeed"
+        app:layout_constraintStart_toEndOf="@+id/etPumpSpeed"
+        app:layout_constraintTop_toTopOf="@+id/tvPumpSpeed" />
+
+    <TextView
+        android:id="@+id/tvVolUnit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/tvtarget_unit"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        app:layout_constraintBottom_toBottomOf="@+id/tvPumpVolume"
+        app:layout_constraintStart_toStartOf="@+id/tvSpeedUnit"
+        app:layout_constraintTop_toTopOf="@+id/tvPumpVolume" />
+
+    <TextView
+        android:id="@+id/tvTimeCalc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/tvPumpTime"
+        app:layout_constraintStart_toStartOf="@+id/etPumpVol"
+        app:layout_constraintTop_toTopOf="@+id/tvPumpTime"
+        tools:text="1h20p" />
+
+    <EditText
+        android:id="@+id/etPumpSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:ems="6"
+        android:hint="@string/tvrate_unit"
+        android:inputType="number"
+        android:minHeight="48dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tvPumpSpeed"
+        app:layout_constraintStart_toEndOf="@+id/tvPumpSpeed"
+        app:layout_constraintTop_toTopOf="@+id/tvPumpSpeed"
+        app:layout_constraintVertical_bias="0.500000" />
+
+    <EditText
+        android:id="@+id/etPumpVol"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="6"
+        android:hint="@string/tvtarget_unit"
+        android:inputType="number"
+        android:minHeight="48dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tvPumpVolume"
+        app:layout_constraintStart_toStartOf="@+id/etPumpSpeed"
+        app:layout_constraintTop_toTopOf="@+id/tvPumpVolume" />
+
+    <Spinner
+        android:id="@+id/spinnerSyringeType"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tvSyringeType"
+        app:layout_constraintStart_toStartOf="@+id/etPumpVol"
+        app:layout_constraintTop_toTopOf="@+id/tvSyringeType" />
+
+    <Spinner
+        android:id="@+id/spinnerOPMode"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tvOperationMode"
+        app:layout_constraintStart_toStartOf="@+id/spinnerSyringeType"
+        app:layout_constraintTop_toTopOf="@+id/tvOperationMode" />
+
+    <Button
+        android:id="@+id/buttonStart"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="128dp"
+        android:layout_marginTop="42dp"
+        android:padding="16dp"
+        android:paddingLeft="32dp"
+        android:paddingRight="32dp"
+        android:text="@string/button_start"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@+id/tvPumpTime"
+        app:layout_constraintTop_toBottomOf="@+id/tvPumpTime" />
+
+    <Button
+        android:id="@+id/buttonStop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:padding="16dp"
+        android:paddingLeft="32dp"
+        android:paddingRight="32dp"
+        android:text="@string/button_stop"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="@+id/buttonStart"
+        app:layout_constraintTop_toBottomOf="@+id/buttonStart" />
+
+    <!-- Logos
+
+    -->
+
+</androidx.constraintlayout.widget.ConstraintLayout>
