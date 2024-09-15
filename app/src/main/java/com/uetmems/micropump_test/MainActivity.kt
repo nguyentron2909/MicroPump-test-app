@@ -25,6 +25,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etPumpVol : EditText
     private lateinit var tvTimeCalc : TextView
     private lateinit var buttonStart : Button
+    private lateinit var buttonStop : Button
     private lateinit var spinnerSyringeType : Spinner
     private lateinit var spinnerOPMode: Spinner
 
@@ -42,8 +43,8 @@ class MainActivity : AppCompatActivity() {
         etPumpSpeed = findViewById(R.id.etPumpSpeed)
         etPumpVol = findViewById(R.id.etPumpVol)
         tvTimeCalc = findViewById(R.id.tvTimeCalc)
-        buttonStart = findViewById(R.id.buttonStart)
 
+        //edit text
         etPumpSpeed.addTextChangedListener( object: TextWatcher{
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
 
@@ -64,7 +65,6 @@ class MainActivity : AppCompatActivity() {
             override fun afterTextChanged(p0: Editable?) {
                 Log.i(TAG,"Pump VOL set to $p0")
                 calculateTime()
-
             }
         })
 
@@ -74,7 +74,6 @@ class MainActivity : AppCompatActivity() {
         spinnerSyringeType = findViewById(R.id.spinnerSyringeType)
 
         val syringeType = resources.getStringArray(R.array.Syringe_type)
-
         val adapterSyringe = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_item,
@@ -83,21 +82,15 @@ class MainActivity : AppCompatActivity() {
             adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
             spinnerSyringeType.adapter = adapter
         }
-
-        spinnerSyringeType.onItemSelectedListener = object: AdapterView.OnItemSelectedListener
-        {
-            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long)
-            {
+        spinnerSyringeType.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
                 Log.i(TAG,"Selected syringe:"+ syringeType[p2])
             }
 
-            override fun onNothingSelected(p0: AdapterView<*>?) {
-                TODO("Not yet implemented")
-            }
-
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
-        val opModes = resources.getStringArray(R.array.Operation_mode)
 
+        val opModes = resources.getStringArray(R.array.Operation_mode)
         val adapterOP = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_item,
@@ -107,29 +100,45 @@ class MainActivity : AppCompatActivity() {
             spinnerOPMode.adapter = adapter
         }
 
-        spinnerOPMode.onItemSelectedListener= object: AdapterView.OnItemSelectedListener
-        {
+        spinnerOPMode.onItemSelectedListener= object: AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
                 Log.i(TAG,"Selected MODE: " + opModes[p2])
             }
 
-            override fun onNothingSelected(p0: AdapterView<*>?) {
-                TODO("Not yet implemented")
-            }
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
+        }
 
+        //Buttons
+        buttonStart = findViewById(R.id.buttonStart)
+        buttonStart.setOnClickListener{
+            Log.i(TAG,"START button clicked")
+        }
+
+        buttonStop = findViewById(R.id.buttonStop)
+        buttonStop.setOnClickListener{
+            Log.i(TAG,"STOP button clicked")
         }
 
     }
 
     private fun calculateTime() {
-        if(etPumpSpeed.text.isEmpty() || etPumpVol.text.isEmpty())
-        {
+        //error checking
+        if(
+            etPumpSpeed.text.isEmpty() ||
+            etPumpVol.text.isEmpty() ||
+            etPumpSpeed.text.toString().toFloat() == 0f ||
+            etPumpVol.text.toString().toFloat() == 0f ||
+            etPumpSpeed.text.toString() == "." ||
+            etPumpVol.text.toString() =="."
+            ) {
             tvTimeCalc.text = " "
             return
         }
+
         //get values
         val rate = etPumpSpeed.text.toString().toDouble()
         val vol = etPumpVol.text.toString().toDouble()
+        val type = spinnerSyringeType.selectedItem.toString()
 
         //calculate time
         val timeCalc = vol / (rate * 1e-3 / 60)
@@ -137,20 +146,18 @@ class MainActivity : AppCompatActivity() {
         val hh = floor(timeCalc / 3600)
         val mm = floor(timeCalc/60 - hh*60)
         val ss = floor(timeCalc - mm*60 - hh*3600)
-        //update UI (convert seconds to hh mm ss
+        //update UI (convert seconds to hh mm ss)
         tvTimeCalc.text = buildString {
-            if(hh>=1)
-            {
+            if(hh>=1) {
                 append("%.0f".format(hh))
                 append(":")
             }
-            if(mm>=1)
-            {
+            if(mm>=1) {
                 append("%.0f".format(mm))
                 append(":")
             }
-            append("%.1f".format(ss))
-            append(" s")
+            append("%.0f".format(ss))
+            //append(" s")
         }
 
     }

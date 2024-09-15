@@ -2,7 +2,7 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.MicroPump_test" parent="Theme.Material3.DynamicColors.DayNight">
         <!-- Customize your light theme here. -->
-        <item name = "android:colorBackground">@color/white</item>
+        <item name = "android:colorBackground">@color/light_mode_purple</item>
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
         <!-- Primary brand color -->
         <item name="colorPrimary">@color/regular_purple</item>
@@ -13,7 +13,7 @@
         <item name="colorSecondaryVariant">@color/hollow_purple</item>
         <item name="colorOnSecondary">@color/light_purple</item>
         <!-- Status bra color -->
-        <item name="android:statusBarColor" tools:targetApo="l">?attr/colorPrimaryVariant</item>
+        <item name="android:statusBarColor" tools:targetApo="l">?attr/colorPrimary</item>
     </style>
 
     <style name="Theme.MicroPump_test" parent="Base.Theme.MicroPump_test" />
