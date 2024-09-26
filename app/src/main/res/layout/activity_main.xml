@@ -12,7 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="72dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="132dp"
         android:text="@string/tvrate"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         app:layout_constraintStart_toStartOf="parent"
@@ -136,17 +136,17 @@
         android:id="@+id/buttonStart"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="40dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginStart="160dp"
+        android:layout_marginTop="40dp"
         android:padding="16dp"
         android:paddingLeft="32dp"
         android:paddingRight="32dp"
         android:text="@string/button_start"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
         android:textSize="16sp"
         android:textStyle="bold"
-        app:layout_constraintStart_toEndOf="@+id/tvVolUnit"
-        app:layout_constraintTop_toBottomOf="@+id/tvVolUnit" />
+        app:layout_constraintStart_toEndOf="@+id/tvPumpTime"
+        app:layout_constraintTop_toBottomOf="@+id/tvPumpTime" />
 
     <Button
         android:id="@+id/buttonStop"
@@ -157,32 +157,62 @@
         android:paddingLeft="32dp"
         android:paddingRight="32dp"
         android:text="@string/button_stop"
-        android:textColor="@color/white"
+        android:textColor="@color/black"
         android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="@+id/buttonStart"
         app:layout_constraintTop_toBottomOf="@+id/buttonStart" />
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/ivLogoUET"
         android:layout_width="72dp"
         android:layout_height="72dp"
-        android:layout_marginStart="380dp"
-        android:layout_marginBottom="40dp"
-        app:layout_constraintBottom_toTopOf="@+id/tvSpeedUnit"
-        app:layout_constraintStart_toEndOf="@+id/etPumpSpeed"
+        android:layout_marginStart="16dp"
+        android:layout_marginBottom="28dp"
+        app:layout_constraintBottom_toTopOf="@+id/tvPumpSpeed"
+        app:layout_constraintStart_toStartOf="parent"
         app:srcCompat="@drawable/logo_uet" />
 
+    <ProgressBar
+        android:id="@+id/pbPumpProgress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="122dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:layout_marginEnd="24dp"
+        android:indeterminateBehavior="repeat"
+        android:progressTint="@color/syringe"
+        android:scaleX="0.7"
+        android:scaleY="5.8"
+        app:layout_constraintBottom_toBottomOf="@+id/buttonStart"
+        app:layout_constraintEnd_toStartOf="@+id/buttonStart"
+        app:layout_constraintHorizontal_bias="0.662"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/buttonStart"
+        app:layout_constraintVertical_bias="0.538" />
+
     <ImageView
-        android:id="@+id/icLogoVNU"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
-        android:layout_marginEnd="8dp"
-        app:layout_constraintBottom_toBottomOf="@+id/imageView"
-        app:layout_constraintEnd_toStartOf="@+id/imageView"
-        app:layout_constraintTop_toTopOf="@+id/imageView"
-        app:layout_constraintVertical_bias="1.0"
-        app:srcCompat="@drawable/logo_vnu" />
+        android:id="@+id/ivSyringe"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="30dp"
+        app:layout_constraintBottom_toBottomOf="@+id/pbPumpProgress"
+        app:layout_constraintEnd_toStartOf="@+id/buttonStart"
+        app:layout_constraintTop_toTopOf="@+id/pbPumpProgress"
+        app:layout_constraintVertical_bias="0.494"
+        app:srcCompat="@drawable/syringe_outline" />
+
+    <TextView
+        android:id="@+id/tvTaskRunning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="26dp"
+        android:textStyle="italic"
+        app:layout_constraintBottom_toBottomOf="@+id/buttonStop"
+        app:layout_constraintEnd_toEndOf="@+id/ivSyringe"
+        app:layout_constraintTop_toTopOf="@+id/buttonStop"
+        app:layout_constraintVertical_bias="0.6"
+        tools:text="Infusing in progress ..." />
 
     <!-- Logos
 

@@ -13,15 +13,15 @@
 
     <!--Spinner string arrays-->
     <string-array name="Syringe_type">
-        <item>1ml</item>
-        <item>3ml</item>
-        <item>5ml</item>
-        <item>10ml</item>
+        <item>Standard 1ml</item>
+        <item>Standard 3ml</item>
+        <item>Standard 5ml</item>
+        <item>Standard 10ml</item>
     </string-array>
 
     <string-array name="Operation_mode">
-        <item>Infuse</item>
-        <item>Withdraw</item>
+        <item>Infusing</item>
+        <item>Withdrawing</item>
     </string-array>
 
 </resources>

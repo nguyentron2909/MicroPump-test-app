@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "730439603320",
+    "firebase_url": "https://micro-pump-mems-24-25-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "micro-pump-mems-24-25",
+    "storage_bucket": "micro-pump-mems-24-25.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730439603320:android:b29702209c00d4ede1098d",
+        "android_client_info": {
+          "package_name": "com.uetmems.micropump_test"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCf2S8dmQHDmaFxH8TU8TkdlyTGn-U58T8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
