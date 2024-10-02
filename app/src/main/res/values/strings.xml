@@ -10,6 +10,9 @@
     <string name="tvtarget_unit">ml</string>
     <string name="button_start">Start</string>
     <string name="button_stop">Stop</string>
+    <string name="connect">Connect to Micropump</string>
+    <string name="connecting">Connecting . . .</string>
+    <string name="connected">Connected</string>
 
     <!--Spinner string arrays-->
     <string-array name="Syringe_type">
@@ -24,4 +27,5 @@
         <item>Withdrawing</item>
     </string-array>
 
+    <string name="BLE_device_name">MMMMMMMicropump 2024</string>
 </resources>
