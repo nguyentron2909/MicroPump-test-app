@@ -1,20 +1,41 @@
 <resources lang="en-US">
     <string name="app_name">MicroPump_test</string>
+
+    <string name="BLE_device_name">MMMMMMMicropump 2024</string>
+
     <!--Main layout strings -->
     <string name="tvrate">Rate:</string>
     <string name="tvtarget">Target:</string>
     <string name="tvsyringe">Syringe:</string>
     <string name="tvmode">Mode:</string>
     <string name="tvtime_left">Time left:</string>
-    <string name="tvrate_unit">µl/min</string>
-    <string name="tvtarget_unit">ml</string>
+    <string name="tvrate_unit">Enter rate</string>
+    <string name="tvtarget_unit">Enter target</string>
     <string name="button_start">Start</string>
     <string name="button_stop">Stop</string>
+
+    <!--Sub layout strings -->
     <string name="connect">Connect to Micropump</string>
     <string name="connecting">Connecting . . .</string>
     <string name="connected">Connected</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="disconnect">Disconnect</string>
 
     <!--Spinner string arrays-->
+    <string-array name="rate_units">
+        <item>ml/min</item>
+        <item>ml/s</item>
+
+        <item>µl/h</item>
+        <item>µl/min</item>
+        <item>µl/s</item>
+    </string-array>
+
+    <string-array name="target_units">
+        <item>ml</item>
+        <item>µl</item>
+    </string-array>
+
     <string-array name="Syringe_type">
         <item>Standard 1ml</item>
         <item>Standard 3ml</item>
@@ -27,5 +48,4 @@
         <item>Withdrawing</item>
     </string-array>
 
-    <string name="BLE_device_name">MMMMMMMicropump 2024</string>
 </resources>

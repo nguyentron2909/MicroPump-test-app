@@ -58,25 +58,21 @@
         app:layout_constraintEnd_toEndOf="@+id/tvOperationMode"
         app:layout_constraintTop_toBottomOf="@+id/tvOperationMode" />
 
-    <TextView
-        android:id="@+id/tvSpeedUnit"
+    <Spinner
+        android:id="@+id/spnRateUnit"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:layout_marginStart="24dp"
-        android:text="@string/tvrate_unit"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         app:layout_constraintBottom_toBottomOf="@+id/tvPumpSpeed"
         app:layout_constraintStart_toEndOf="@+id/etPumpSpeed"
         app:layout_constraintTop_toTopOf="@+id/tvPumpSpeed" />
 
-    <TextView
-        android:id="@+id/tvVolUnit"
+    <Spinner
+        android:id="@+id/spnTargetUnit"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/tvtarget_unit"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:layout_height="48dp"
         app:layout_constraintBottom_toBottomOf="@+id/tvPumpVolume"
-        app:layout_constraintStart_toStartOf="@+id/tvSpeedUnit"
+        app:layout_constraintStart_toStartOf="@+id/spnRateUnit"
         app:layout_constraintTop_toTopOf="@+id/tvPumpVolume" />
 
     <TextView
@@ -88,7 +84,8 @@
         app:layout_constraintBottom_toBottomOf="@+id/tvPumpTime"
         app:layout_constraintStart_toStartOf="@+id/etPumpVol"
         app:layout_constraintTop_toTopOf="@+id/tvPumpTime"
-        tools:text="1:23:45 s" />
+        tools:text="1:23:45 s"
+        tools:ignore="VisualLintOverlap" />
 
     <EditText
         android:id="@+id/etPumpSpeed"
@@ -137,7 +134,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="160dp"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="54dp"
         android:padding="16dp"
         android:paddingLeft="32dp"
         android:paddingRight="32dp"
@@ -168,10 +165,11 @@
         android:layout_width="72dp"
         android:layout_height="72dp"
         android:layout_marginStart="16dp"
-        android:layout_marginBottom="28dp"
+        android:layout_marginBottom="48dp"
         app:layout_constraintBottom_toTopOf="@+id/tvPumpSpeed"
         app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/logo_uet" />
+        app:srcCompat="@drawable/logo_uet"
+        tools:ignore="ContentDescription" />
 
     <ProgressBar
         android:id="@+id/pbPumpProgress"
@@ -191,17 +189,6 @@
         app:layout_constraintTop_toTopOf="@+id/buttonStart"
         app:layout_constraintVertical_bias="0.538" />
 
-    <ImageView
-        android:id="@+id/ivSyringe"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="30dp"
-        app:layout_constraintBottom_toBottomOf="@+id/pbPumpProgress"
-        app:layout_constraintEnd_toStartOf="@+id/buttonStart"
-        app:layout_constraintTop_toTopOf="@+id/pbPumpProgress"
-        app:layout_constraintVertical_bias="0.494"
-        app:srcCompat="@drawable/syringe_outline" />
-
     <TextView
         android:id="@+id/tvTaskRunning"
         android:layout_width="wrap_content"
@@ -213,6 +200,18 @@
         app:layout_constraintTop_toTopOf="@+id/buttonStop"
         app:layout_constraintVertical_bias="0.6"
         tools:text="Infusing in progress ..." />
+
+    <ImageView
+        android:id="@+id/ivSyringe"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="30dp"
+        app:layout_constraintBottom_toBottomOf="@+id/pbPumpProgress"
+        app:layout_constraintEnd_toStartOf="@+id/buttonStart"
+        app:layout_constraintTop_toTopOf="@+id/pbPumpProgress"
+        app:layout_constraintVertical_bias="0.494"
+        app:srcCompat="@drawable/syringe_outline"
+        tools:ignore="ContentDescription" />
 
     <Button
         android:id="@+id/btnConnect"
@@ -232,6 +231,20 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/tvConnectionStatus"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:backgroundTintMode="multiply"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Small"
+        android:textStyle="italic"
+        app:layout_constraintBottom_toTopOf="@+id/btnConnect"
+        app:layout_constraintEnd_toEndOf="@+id/btnConnect"
+        app:layout_constraintStart_toStartOf="@+id/btnConnect"
+        tools:text="@string/disconnected" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

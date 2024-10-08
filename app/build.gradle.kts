@@ -70,8 +70,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     //ble stuff
-    implementation("com.google.android.gms:play-services-location:21.3.0")
-
+    implementation(libs.play.services.location)
 
     //firebase stuff
     // bill of material (BOM)
