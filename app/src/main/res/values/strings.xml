@@ -1,5 +1,5 @@
 <resources lang="en-US">
-    <string name="app_name">MicroPump_test</string>
+    <string name="app_name">UET Micropump</string>
 
     <string name="BLE_device_name">MMMMMMMicropump 2024</string>
 

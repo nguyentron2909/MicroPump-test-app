@@ -11,9 +11,11 @@ import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
+import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -31,6 +33,7 @@ import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -45,26 +48,31 @@ import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.LocationSettingsResponse
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.Task
-import com.google.firebase.Firebase
-import com.google.firebase.firestore.firestore
 import java.util.UUID
 import kotlin.math.floor
+//import com.google.firebase.Firebase
+///import com.google.firebase.firestore.firestore
+
 
 class MainActivity : AppCompatActivity() {
 
     companion object{
         private const val TAG = "UET-MEMS MainActivity"
         private const val REQUEST_ENABLE_BT = 891
-        private const val REQUEST_ENABLE_LOCATION = 596
+        private const val REQUEST_PERMISSIONS = 596
         private const val SCAN_TIME: Long = 10000
 
-        private const val START_PROGRESS = 100
-        private var CURRENT_USER = "user0000"
+        private const val START_PROGRESS = 100 //%
+        //private var CURRENT_USER = "user0000"
         private var isConnected = false
         private var isGoodToStartScan = false
         private var sendSucess = false
         private var ESP_ADDRESS = "null"
-        //private var data = listOf<String>()
+
+        private val requiredPermissions = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.BLUETOOTH_SCAN
+        )
     }
 
     private lateinit var etPumpSpeed : EditText
@@ -87,7 +95,8 @@ class MainActivity : AppCompatActivity() {
     private val bluetoothLeScanner: BluetoothLeScanner? = bluetoothAdapter?.bluetoothLeScanner
     private var gattGlobal: BluetoothGatt? = null
     //firebase shitz
-    private var db = Firebase.firestore
+    //private var db = Firebase.firestore
+
 
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?)
@@ -100,16 +109,37 @@ class MainActivity : AppCompatActivity() {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
-        //todo shortcut:
+
         //checking if the system supports ble
         if(!packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE))
         {
             showNoBLECapability()
         }
+
+
         //request to access location permission
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 2)
+
+        if(!hasPermissions())
+        {
+            val requestPermissionsLauncher =
+                registerForActivityResult(
+                    ActivityResultContracts.RequestMultiplePermissions()
+                )
+                { permissions->
+                    if(permissions.all{ it.value})
+                    {
+                        Log.i(TAG,"All permissions granted.")
+                    }
+                    else {
+                        Log.w(TAG,"Missing permissions")
+
+
+                    }
+                }
+
+            requestPermissionsLauncher.launch(requiredPermissions)
         }
+
 
         //items
         etPumpSpeed = findViewById(R.id.etPumpSpeed)
@@ -128,7 +158,7 @@ class MainActivity : AppCompatActivity() {
         tvConnectStatus = findViewById(R.id.tvConnectionStatus)
 
         // initialization
-        var timeEstimated = calculateTime()
+
         updateConnectionStatus()
         //edit text
         etPumpSpeed.addTextChangedListener( object: TextWatcher{
@@ -138,9 +168,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun afterTextChanged(p0: Editable?) {
                Log.i(TAG,"Pump SPEED set to $p0")
-                //error checking
-                timeEstimated = calculateTime()
-                updateTimeUI(timeEstimated)
+                updateTimeUI(calculateTime())
 
             }
         })
@@ -151,8 +179,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun afterTextChanged(p0: Editable?) {
                 Log.i(TAG,"Pump VOL set to $p0")
-                timeEstimated = calculateTime()
-                updateTimeUI(timeEstimated)
+                updateTimeUI(calculateTime())
             }
         })
 
@@ -170,11 +197,10 @@ class MainActivity : AppCompatActivity() {
         spinnerSyringeType.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
                 Log.i(TAG,"Selected syringe:"+ syringeType[p2])
+                updateTimeUI(calculateTime())
             }
 
-            override fun onNothingSelected(p0: AdapterView<*>?) {
-                spinnerSyringeType.setSelection(1,true)
-            }
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
 
         //operation mode
@@ -190,6 +216,7 @@ class MainActivity : AppCompatActivity() {
         spinnerOPMode.onItemSelectedListener= object: AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p0: AdapterView<*>?, p1: View?, p2: Int, p3: Long) {
                 Log.i(TAG,"Selected MODE: " + opModes[p2])
+                updateTimeUI(calculateTime())
             }
 
             override fun onNothingSelected(p0: AdapterView<*>?) {}
@@ -211,14 +238,12 @@ class MainActivity : AppCompatActivity() {
                 updateTimeUI(calculateTime())
             }
 
-            override fun onNothingSelected(p0: AdapterView<*>?) {
-                spnRateUnit.setSelection(3,true)
-            }
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
 
 
         val targetUnit = resources.getStringArray(R.array.target_units)
-        val adapter = ArrayAdapter(
+        ArrayAdapter(
             this,
             android.R.layout.simple_spinner_item,
             targetUnit
@@ -232,10 +257,7 @@ class MainActivity : AppCompatActivity() {
                 updateTimeUI(calculateTime())
             }
 
-            override fun onNothingSelected(p0: AdapterView<*>?) {
-                spnTargetUnit.setSelection(1,true)
-
-            }
+            override fun onNothingSelected(p0: AdapterView<*>?) {}
         }
 
         //Buttons
@@ -243,28 +265,14 @@ class MainActivity : AppCompatActivity() {
         buttonStop.isClickable = false
         buttonStart.setOnClickListener {
             Log.i(TAG,"START button clicked")
-            startPump(timeEstimated)
+            startPump(calculateTime())
         }
 
         btnConnect.setOnClickListener {
-            if (!isConnected) {
                 Log.i(TAG, "Connect clicked")
                 btnConnect.isEnabled = false
                 btnConnect.setText(R.string.connecting)
                 requestBLEPermission()
-            }
-            else{
-                Log.i(TAG, "Disconnect clicked")
-                btnConnect.isEnabled = true
-                isConnected = false
-                btnConnect.setText(R.string.connect)
-
-            }
-
-            if (isGoodToStartScan)
-            {
-                scanForESP32()
-            }
         }
 
         //Progress bar
@@ -276,64 +284,132 @@ class MainActivity : AppCompatActivity() {
         Log.w(TAG,"Device does not support BLE")
         AlertDialog.Builder(this)
             .setTitle("Your device does not have Bluetooth Low Energy functionality")
-            .setPositiveButton("OK"){_,_, ->
+            .setPositiveButton("OK"){_,_ ->
                 finish()
             }.show()
     }
-    private fun requestBLEPermission() {
-        isGoodToStartScan = false
-        val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY,SCAN_TIME)
-            .setMinUpdateIntervalMillis(5000)
-            .build()
-        val builder = LocationSettingsRequest.Builder()
-            .addLocationRequest(locationRequest)
-        val client = LocationServices.getSettingsClient(this)
-        val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
 
-        task.addOnSuccessListener { locationSettingsResponse->
-            Log.i(LOCATION_TAG,"location turned on! ${locationSettingsResponse}")
+    private fun hasPermissions() :Boolean
+    {
+        return requiredPermissions.all{
+            ContextCompat.checkSelfPermission(this,it) == PackageManager.PERMISSION_GRANTED
+        }
+    }
+
+    private fun requestBLEPermission() {
+        var bluetoothEnabled = false
+        //  BLUETOOT
+        if (bluetoothAdapter == null ){
+            showNoBLECapability()
+            return
+        }
+        else {
+            var lauchOneRequest = true
+            while (!bluetoothEnabled)
+            {
+                if (!bluetoothAdapter.isEnabled) {
+                    //if bluetooth is not enabled
+                    val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+
+                    if (lauchOneRequest) {
+                        lauchOneRequest = false
+                        startActivityForResult(enableBluetoothIntent,REQUEST_ENABLE_BT)
+                    }
+                }
+                else {
+                    Log.i(TAG,"Bluetooth already enabled")
+                    bluetoothEnabled = true
+                }
             }
-        task.addOnFailureListener { exception ->
-            if (exception is ResolvableApiException){
-                // Location settings are not satisfied, but this can be fixed
-                // by showing the user a dialog.
-                try {
-                    // Show the dialog by calling startResolutionForResult(),
-                    // and check the result in onActivityResult().
-                    exception.startResolutionForResult(this@MainActivity,
-                        REQUEST_ENABLE_LOCATION)
-                } catch (sendEx: IntentSender.SendIntentException) {
+
+        }
+
+        //LOCATION
+        var locationEnabled = false
+        checkPermission(Manifest.permission.ACCESS_FINE_LOCATION, REQUEST_PERMISSIONS)
+        val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+            !locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
+        {
+            //if locatoin is not enabled
+            val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY,SCAN_TIME)
+                .setMinUpdateIntervalMillis(5000)
+                .build()
+            val builder = LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest)
+            val client = LocationServices.getSettingsClient(this)
+            val task1: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
+
+            task1.addOnSuccessListener { locationSettingsResponse->
+                Log.i(LOCATION_TAG,"location turned on! ${locationSettingsResponse}")
+                locationEnabled = true
+            }
+            task1.addOnFailureListener { exception ->
+                if (exception is ResolvableApiException) {
+                    // Location settings are not satisfied, but this can be fixed
+                    // by showing the user a dialog.
+                    try {
+                        // Show the dialog by calling startResolutionForResult(),
+                        // and check the result in onActivityResult().
+                        exception.startResolutionForResult(
+                            this@MainActivity,
+                            REQUEST_PERMISSIONS
+                        )
+                    } catch (sendEx: IntentSender.SendIntentException) {
                         // Ignore the error.
+                    }
                 }
             }
         }
-
-        //request permissions
-        if (bluetoothAdapter!!.isEnabled){
-            Log.i(SCAN_TAG,"Permission already granted")
-            //Toast.makeText(this,"Bluetooth permission already granted",Toast.LENGTH_SHORT).show()
-            isGoodToStartScan =true
-            //scanForESP32()
-        }
         else {
-            if (bluetoothAdapter == null) {
-                //if there is no adapter => cant use ble
-                showNoBLECapability()
-            }
-
-            if (!bluetoothAdapter.isEnabled) {
-                val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-
-                checkPermission(Manifest.permission.BLUETOOTH_CONNECT,2)
-                startActivityForResult(enableBluetoothIntent,REQUEST_ENABLE_BT)
-            }
-            else {
-                Log.i(TAG,"Permission already granted")
-                Toast.makeText(this,"Bluetooth permission already granted",Toast.LENGTH_SHORT).show()
-                isGoodToStartScan = true
-            }
+            Log.i(TAG,"Location already enabled ")
+            locationEnabled = true
         }
+
+        isGoodToStartScan = bluetoothEnabled && locationEnabled
+        if (isGoodToStartScan)
+        {
+            scanForESP32()
+        }
+        /*
+        AlertDialog.Builder(this)
+            .setTitle("Requesting permissions")
+            .setMessage("We need location and bluetooth to be on for the app to work")
+            .setPositiveButton("ok") {_,_ ->
+                val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY,SCAN_TIME)
+                    .setMinUpdateIntervalMillis(5000)
+                    .build()
+                val builder = LocationSettingsRequest.Builder()
+                    .addLocationRequest(locationRequest)
+                val client = LocationServices.getSettingsClient(this)
+                val task1: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
+
+                task1.addOnSuccessListener { locationSettingsResponse->
+                    Log.i(LOCATION_TAG,"location turned on! ${locationSettingsResponse}")
+                }
+                task1.addOnFailureListener { exception ->
+                    if (exception is ResolvableApiException) {
+                        // Location settings are not satisfied, but this can be fixed
+                        // by showing the user a dialog.
+                        try {
+                            // Show the dialog by calling startResolutionForResult(),
+                            // and check the result in onActivityResult().
+                            exception.startResolutionForResult(
+                                this@MainActivity,
+                                REQUEST_PERMISSIONS
+                            )
+                        } catch (sendEx: IntentSender.SendIntentException) {
+                            // Ignore the error.
+                        }
+                    }
+                }
+            }.show()
+
+
+        */
     }
+
     private fun checkPermission(permission: String, requestCode: Int) {
         if (ActivityCompat.checkSelfPermission(
                 this@MainActivity,
@@ -354,11 +430,13 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_OK)
         {
-            Log.i(TAG,"bluetooth permission granted!")
+            Log.i(TAG,"bluetooth enabled! @activityresult")
+            //bluetoothEnabled = true
             isGoodToStartScan = true
             return
         }
-        else {
+        else {//if(requestCode == REQUEST_ENABLE_BT && resultCode != Activity.RESULT_OK) {
+            Log.i(TAG,"bluetooth not enabled! @activityresult")
             Toast.makeText(this,"pls enable bluetooth",Toast.LENGTH_SHORT).show()
             isGoodToStartScan = false
             requestBLEPermission()
@@ -367,7 +445,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val scanCallback = object: ScanCallback() {
-
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             val device = result?.device
             checkPermission(Manifest.permission.BLUETOOTH_CONNECT, REQUEST_ENABLE_BT)
@@ -410,12 +487,13 @@ class MainActivity : AppCompatActivity() {
         }
         else {
             Log.i(SCAN_TAG, "Device already connected")
+            Log.i(SCAN_TAG, "How to turn this one off :'( ")
         }
     }
+    @SuppressLint("MissingPermission")
     private fun scanForESP32() {
         //scanning
         Log.i(TAG,"Start scanning")
-        checkPermission(Manifest.permission.BLUETOOTH_CONNECT, REQUEST_ENABLE_BT)
         bluetoothLeScanner?.startScan(scanCallback)
 
         Handler().postDelayed(noDeviceFoundDialog, SCAN_TIME)
@@ -443,6 +521,9 @@ class MainActivity : AppCompatActivity() {
 
                 btnConnect.setOnClickListener{
                     gatt?.disconnect()
+                    Log.i(TAG, "Disconnect clicked")
+                    btnConnect.isEnabled = true
+                    isConnected = false
                     btnConnect.setText(R.string.connect)
                 }
 
@@ -472,8 +553,8 @@ class MainActivity : AppCompatActivity() {
                     if(uuid.toString() == UUIDs[0]) {
                         val characteristics = listOfServices[i].characteristics
 
-                        for (i in characteristics.indices) {
-                            Log.d(CONNECT_TAG,"chars uuid $i: ${characteristics[i].uuid}")
+                        for (j in characteristics.indices) {
+                            Log.d(CONNECT_TAG,"chars uuid $i: ${characteristics[j].uuid}")
                         }
                         break
                     }
@@ -492,7 +573,7 @@ class MainActivity : AppCompatActivity() {
         ) {
             if (status == BluetoothGatt.GATT_SUCCESS)
             {
-                Log.i(TAG,"write succeeded !")
+                Log.i(TAG,"write to ${characteristic?.uuid} succeeded !")
                 sendSucess = true
             }
             else {
@@ -513,11 +594,32 @@ class MainActivity : AppCompatActivity() {
 
     //base functions
     private fun parseData(): List<String> {
+        val rateUnit:Double = when (spnRateUnit.selectedItemPosition) {
+            0 -> 1.0 / 60.0 // ml/min
+            1 -> 1.0        //ml/s
+            2 -> 1e-3 / 3600//ul/h
+            3 -> 1e-3 / 60  //ul/min
+            4 -> 1e-3       //ul/s
+
+            else -> -1.0 //error
+        }
+        val rate = etPumpSpeed.text.toString().toDouble()
+
+        val volUnit:Double = when (spnTargetUnit.selectedItemPosition) {
+            0 -> 1.0    //ml
+            1 -> 1e-3   //ul
+
+            else -> -1.0 // error
+        }
+        val vol = etPumpVol.text.toString().toDouble()
+
+        val isRunning = 1
         val list = listOf(
-            etPumpSpeed.text.toString(),
-            etPumpVol.text.toString(),
+            (rate*rateUnit).toString(),
+            (vol*volUnit).toString(),
             spinnerSyringeType.selectedItemPosition.toString(),
-            spinnerOPMode.selectedItemPosition.toString()
+            spinnerOPMode.selectedItemPosition.toString(),
+            isRunning.toString()
         )
 
         Log.i(TAG,"[rate, target, syringe, mode")
@@ -529,12 +631,15 @@ class MainActivity : AppCompatActivity() {
         if(isConnected) {
             tvConnectStatus.setText(R.string.connected)
             tvConnectStatus.setTextColor(ContextCompat.getColor(this,R.color.connected))
+            btnConnect.setText(R.string.disconnect)
             //tvConnectStatus.setBackgroundColor(ContextCompat.getColor(this,R.color.connected))
 
         }
         else {
             tvConnectStatus.setText(R.string.disconnected)
             tvConnectStatus.setTextColor(ContextCompat.getColor(this,R.color.not_connected))
+            btnConnect.setText(R.string.connect)
+
         }
     }
 
@@ -558,11 +663,12 @@ class MainActivity : AppCompatActivity() {
             Log.i(TAG, "Sending data to device: ${gattGlobal.toString()}")
             val dataToSend = parseData()
 
-            for (i in 1..<UUIDs.size-1) {
+            for (i in 1..<UUIDs.size) {
                 //1 = rate
                 //2 = target
                 //3 = syringe
                 //4 = mode
+                //5 = run
 
                 //get the uuids, set write type
                 val characteristicUUID = UUID.fromString(UUIDs[i])
@@ -595,7 +701,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
         }
 /*
         //firebase stuff
@@ -632,32 +737,52 @@ class MainActivity : AppCompatActivity() {
             append(" in progress ...")
         }
 
-         val timer = object : CountDownTimer(floor(time).toLong()*1000 + 1,1000) {
-            override fun onTick(p0: Long) {
-                updateTimeUI(p0.toDouble()/1000)
+        if (sendSucess) {
+            val timer = object : CountDownTimer(floor(time).toLong() * 1000 + 1, 1000) {
+                override fun onTick(p0: Long) {
+                    updateTimeUI(p0.toDouble() / 1000)
 
-                val percentageLeft =  ( p0 / floor(time).toLong() / 10).toInt()
-                //Log.i(TAG,"%: $percentageLeft")
-                pbPumpProgress.setProgress(percentageLeft,true)
-            }
+                    val percentageLeft = (p0 / floor(time).toLong() / 10).toInt()
+                    //Log.i(TAG,"%: $percentageLeft")
+                    pbPumpProgress.setProgress(percentageLeft, true)
+                    if (bluetoothAdapter?.isEnabled == false) {
+                        stopPump()
+                        isConnected = false
+                        btnConnect.setText(R.string.connect)
+                        Log.e(TAG, "Bluetooth turned off")
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Bluetooth turned off, cant continue",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        btnConnect.setOnClickListener {
+                            Log.i(TAG, "Connect clicked")
+                            btnConnect.isEnabled = false
+                            btnConnect.setText(R.string.connecting)
+                            requestBLEPermission()
+                        }
+                        cancel()
+                    }
+                }
 
-            override fun onFinish() {
+                override fun onFinish() {
+                    stopPump()
+                    btnConnect.isEnabled = true
+                    //CURRENT_PROGRESS = FINISHED
+                    Toast.makeText(this@MainActivity, "Complete !", Toast.LENGTH_LONG).show()
+                }
+            }.start()
+
+            buttonStop.isEnabled = true
+            buttonStop.setOnClickListener {
+                Log.i(TAG, "STOP button clicked")
                 stopPump()
-                //CURRENT_PROGRESS = FINISHED
-                Toast.makeText(this@MainActivity,"Complete !",Toast.LENGTH_LONG).show()
+                timer.cancel()
             }
-        }.start()
-
-        buttonStop.isEnabled = true
-        buttonStop.setOnClickListener {
-            Log.i(TAG,"STOP button clicked")
-            stopPump()
-            timer.cancel()
         }
     }
+    @SuppressLint("MissingPermission")
     private fun stopPump() {
-        //sending boolean false to stop running
-        //todo: send a false to isRunning char
         /*
         //firebase stuff
         val dataToSend = mapOf("isRunning" to false)
@@ -678,14 +803,44 @@ class MainActivity : AppCompatActivity() {
             }
 
          */
+
+        if (sendSucess)
+        {
+            val serviceUUID = UUID.fromString(UUIDs[0])
+            Log.i(TAG, "Sending data to device: ${gattGlobal.toString()}")
+            val characteristicUUID = UUID.fromString(UUIDs[5]) // isRunning
+            val characteristic = gattGlobal?.getService(serviceUUID)?.getCharacteristic(characteristicUUID)
+            characteristic?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+            characteristic.let {
+                //get a byte array of character set UTF-8
+                val isRunning = 0 
+                val dataToWrite = isRunning.toString().toByteArray(Charsets.UTF_8)
+
+                // Set the data to write (it = characteristics(var) )
+                it?.value = dataToWrite
+
+                // Write data
+                val succ = gattGlobal?.writeCharacteristic(it)
+                if (succ == true) {
+                    Log.d("BLE_WRITE", "Write initiated")
+                    sendSucess = false //resetting the onCHarWrite listener
+                } else {
+                    Log.d("BLE_WRITE", "Write failed")
+                }
+            }
+        }
+
+
         tvTaskRunning.text = " "
         updateTimeUI(calculateTime())
-        //pbPumpProgress.setProgress(CURRENT_PROGRESS,true)
+        pbPumpProgress.setProgress(START_PROGRESS,true)
+
 
         //disable some function
         buttonStop.isEnabled = false
         buttonStop.isClickable = false
         //re enable some functions
+        btnConnect.isEnabled = true
         spinnerOPMode.isEnabled = true
         spinnerSyringeType.isEnabled = true
         buttonStart.isEnabled = true

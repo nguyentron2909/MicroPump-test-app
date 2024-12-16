@@ -62,7 +62,7 @@
         android:id="@+id/spnRateUnit"
         android:layout_width="wrap_content"
         android:layout_height="48dp"
-        android:layout_marginStart="24dp"
+        android:layout_marginStart="8dp"
         app:layout_constraintBottom_toBottomOf="@+id/tvPumpSpeed"
         app:layout_constraintStart_toEndOf="@+id/etPumpSpeed"
         app:layout_constraintTop_toTopOf="@+id/tvPumpSpeed" />
@@ -134,7 +134,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="160dp"
-        android:layout_marginTop="54dp"
+        android:layout_marginTop="42dp"
         android:padding="16dp"
         android:paddingLeft="32dp"
         android:paddingRight="32dp"
@@ -162,10 +162,10 @@
 
     <ImageView
         android:id="@+id/ivLogoUET"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
+        android:layout_width="90dp"
+        android:layout_height="90dp"
         android:layout_marginStart="16dp"
-        android:layout_marginBottom="48dp"
+        android:layout_marginBottom="30dp"
         app:layout_constraintBottom_toTopOf="@+id/tvPumpSpeed"
         app:layout_constraintStart_toStartOf="parent"
         app:srcCompat="@drawable/logo_uet"

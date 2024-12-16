@@ -28,6 +28,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -49,6 +50,7 @@ android {
         }
     }
 }
+
 
 dependencies {
 
@@ -72,13 +74,6 @@ dependencies {
     //ble stuff
     implementation(libs.play.services.location)
 
-    //firebase stuff
-    // bill of material (BOM)
-    implementation(platform("com.google.firebase:firebase-bom:33.3.0"))
-    //authorization
-    implementation("com.google.firebase:firebase-auth")
-    //real time database
-    implementation("com.google.firebase:firebase-database")
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
