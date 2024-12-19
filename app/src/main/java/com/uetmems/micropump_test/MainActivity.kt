@@ -4,9 +4,12 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothCodecStatus
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
@@ -20,6 +23,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
+import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -89,11 +93,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvConnectStatus :TextView
 
     //bluetooth LE functionalities
+    private val handler = Handler(Looper.getMainLooper())
     private lateinit var btnConnect : Button
 
     private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
     private val bluetoothLeScanner: BluetoothLeScanner? = bluetoothAdapter?.bluetoothLeScanner
     private var gattGlobal: BluetoothGatt? = null
+    private lateinit var bluetoothLEDevice: BluetoothDevice
     //firebase shitz
     //private var db = Firebase.firestore
 
@@ -118,7 +124,6 @@ class MainActivity : AppCompatActivity() {
 
 
         //request to access location permission
-
         if(!hasPermissions())
         {
             val requestPermissionsLauncher =
@@ -298,7 +303,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestBLEPermission() {
         var bluetoothEnabled = false
-        //  BLUETOOT
+        //  BLUETOOTh
         if (bluetoothAdapter == null ){
             showNoBLECapability()
             return
@@ -342,7 +347,7 @@ class MainActivity : AppCompatActivity() {
             val task1: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
 
             task1.addOnSuccessListener { locationSettingsResponse->
-                Log.i(LOCATION_TAG,"location turned on! ${locationSettingsResponse}")
+                Log.i(LOCATION_TAG,"location turned on! $locationSettingsResponse")
                 locationEnabled = true
             }
             task1.addOnFailureListener { exception ->
@@ -494,16 +499,17 @@ class MainActivity : AppCompatActivity() {
     private fun scanForESP32() {
         //scanning
         Log.i(TAG,"Start scanning")
+
         bluetoothLeScanner?.startScan(scanCallback)
 
-        Handler().postDelayed(noDeviceFoundDialog, SCAN_TIME)
+        handler.postDelayed(noDeviceFoundDialog, SCAN_TIME)
     }
     private fun stopScan() {
         Log.i(SCAN_TAG, "Stopped BLE scan")
         isGoodToStartScan = false;
         checkPermission(Manifest.permission.BLUETOOTH_CONNECT, REQUEST_ENABLE_BT)
-        Handler().removeCallbacksAndMessages(null)
-        Handler().removeCallbacks(noDeviceFoundDialog)
+        handler.removeCallbacksAndMessages(null)
+        handler.removeCallbacks(noDeviceFoundDialog)
         bluetoothLeScanner?.stopScan(scanCallback)
     }
 
@@ -515,9 +521,6 @@ class MainActivity : AppCompatActivity() {
                 // successfully connected to the GATT Server
                 gattGlobal = gatt
                 Log.i(CONNECT_TAG,"Device connected ${gatt.toString()}")
-                isConnected = true
-                isGoodToStartScan = false
-                btnConnect.isEnabled = true
 
                 btnConnect.setOnClickListener{
                     gatt?.disconnect()
@@ -527,7 +530,6 @@ class MainActivity : AppCompatActivity() {
                     btnConnect.setText(R.string.connect)
                 }
 
-                updateConnectionStatus()
                 gatt?.discoverServices()
             }
             else if (newState == BluetoothProfile.STATE_DISCONNECTED)
@@ -536,17 +538,27 @@ class MainActivity : AppCompatActivity() {
                 isConnected = false
                 isGoodToStartScan = true
                 btnConnect.setText(R.string.connect)
+
                 btnConnect.setOnClickListener{
-                    gatt?.connect()
-                    btnConnect.setText(R.string.disconnect)
+                    //gatt?.connect()
+                    Log.i(TAG, "Connect clicked")
+                    btnConnect.isEnabled = false
+                    btnConnect.setText(R.string.connecting)
+                    scanForESP32()
+
                 }
                 updateConnectionStatus()
             }
+
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             val listOfServices = gatt?.services
             if (listOfServices != null) {
+                isConnected = true
+                isGoodToStartScan = false
+                btnConnect.isEnabled = true
+                updateConnectionStatus()
                 for (i in 0..<listOfServices.size) {
                     val uuid = listOfServices[i].uuid
                     Log.i(CONNECT_TAG,"Service UUID $i: ${uuid}")
@@ -554,11 +566,12 @@ class MainActivity : AppCompatActivity() {
                         val characteristics = listOfServices[i].characteristics
 
                         for (j in characteristics.indices) {
-                            Log.d(CONNECT_TAG,"chars uuid $i: ${characteristics[j].uuid}")
+                            Log.d(CONNECT_TAG,"chars uuid $j: ${characteristics[j].uuid}")
                         }
                         break
                     }
                 }
+                updateConnectionStatus()
             }
             else {
                 Log.w(CONNECT_TAG,"Did not find any services")
@@ -586,9 +599,9 @@ class MainActivity : AppCompatActivity() {
         checkPermission(Manifest.permission.BLUETOOTH_CONNECT, REQUEST_ENABLE_BT)
 
         bluetoothAdapter?.let{ adapter ->
-            val device = adapter.getRemoteDevice(address)
+            bluetoothLEDevice = adapter.getRemoteDevice(address)
             // connect to the GATT server on the device
-            device.connectGatt(this, false, bluetoothGattCallback )
+            bluetoothLEDevice.connectGatt(this, false, bluetoothGattCallback )
         }
     }
 
@@ -615,14 +628,14 @@ class MainActivity : AppCompatActivity() {
 
         val isRunning = 1
         val list = listOf(
-            (rate*rateUnit).toString(),
+            "%4f".format(rate*rateUnit),
             (vol*volUnit).toString(),
             spinnerSyringeType.selectedItemPosition.toString(),
             spinnerOPMode.selectedItemPosition.toString(),
             isRunning.toString()
         )
 
-        Log.i(TAG,"[rate, target, syringe, mode")
+        Log.i(TAG,"[rate, target, syringe, mode]")
         Log.i(TAG,"$list")
 
         return list
@@ -655,7 +668,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (!isConnected){
-            Toast.makeText(this,"Please connect to micropump first",Toast.LENGTH_SHORT).show()
+            Toast.makeText(this,"Please connect to Micropump first",Toast.LENGTH_SHORT).show()
             return
         }
         else {
@@ -664,13 +677,16 @@ class MainActivity : AppCompatActivity() {
             val dataToSend = parseData()
 
             for (i in 1..<UUIDs.size) {
+                /* number meaning
                 //1 = rate
                 //2 = target
                 //3 = syringe
                 //4 = mode
                 //5 = run
+                */
 
                 //get the uuids, set write type
+                Log.d(TAG, "writing chars number $i");
                 val characteristicUUID = UUID.fromString(UUIDs[i])
                 val characteristic = gattGlobal?.getService(serviceUUID)?.getCharacteristic(characteristicUUID)
                 characteristic?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
@@ -745,6 +761,7 @@ class MainActivity : AppCompatActivity() {
                     val percentageLeft = (p0 / floor(time).toLong() / 10).toInt()
                     //Log.i(TAG,"%: $percentageLeft")
                     pbPumpProgress.setProgress(percentageLeft, true)
+                    //if bluetooth is turned off
                     if (bluetoothAdapter?.isEnabled == false) {
                         stopPump()
                         isConnected = false
@@ -755,6 +772,29 @@ class MainActivity : AppCompatActivity() {
                             "Bluetooth turned off, cant continue",
                             Toast.LENGTH_LONG
                         ).show()
+
+                        btnConnect.setOnClickListener {
+                            Log.i(TAG, "Connect clicked")
+                            btnConnect.isEnabled = false
+                            btnConnect.setText(R.string.connecting)
+                            requestBLEPermission()
+                        }
+                        cancel()
+                    }
+
+                    val btManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+                    //if is disconnected
+                    if (btManager.getConnectionState(bluetoothLEDevice,BluetoothProfile.GATT) == BluetoothProfile.STATE_DISCONNECTED) {
+                        stopPump()
+                        isConnected = false
+                        btnConnect.setText(R.string.connect)
+                        Log.e(TAG, "Bluetooth device disconnected")
+                        Toast.makeText(
+                            this@MainActivity,
+                            "Bluetooth device disconnected, can't continue",
+                            Toast.LENGTH_LONG
+                        ).show()
+
                         btnConnect.setOnClickListener {
                             Log.i(TAG, "Connect clicked")
                             btnConnect.isEnabled = false

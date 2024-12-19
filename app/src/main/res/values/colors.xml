@@ -6,11 +6,12 @@
     <color name="connected">#0cb800</color>
     <color name="not_connected">#fc0303</color>
 
-    <color name="syringe">#90d5ff</color>
+    <color name="syringe_light">#90d5ff</color>
+    <color name="syringe_dark">#228ac9</color>
 
-    <color name="light_mode_purple">#EBD3F8</color>
-    <color name="light_purple">#C8B1E4</color>
-    <color name="regular_purple">#9B72CF</color>
+    <color name="light_mode_purple">#eaddff</color>
+    <color name="light_purple">#c7a6ff</color>
+    <color name="regular_purple">#a781e5</color>
     <color name="hollow_purple">#532B88</color>
     <color name="dark_purple">#3c096c</color>
     <color name="deep_dark_purple">#240046</color>

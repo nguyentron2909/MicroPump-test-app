@@ -9,7 +9,7 @@
         <item name="colorPrimaryVariant">@color/hollow_purple</item>
         <item name="colorOnPrimary">@color/light_purple</item>
         <!-- Secondary brand color -->
-        <item name="colorSecondary">@color/regular_purple</item>
+        <item name="colorSecondary">@color/syringe_light</item>
         <item name="colorSecondaryVariant">@color/hollow_purple</item>
         <item name="colorOnSecondary">@color/light_purple</item>
         <!-- Status bra color -->

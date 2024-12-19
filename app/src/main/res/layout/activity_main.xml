@@ -133,7 +133,7 @@
         android:id="@+id/buttonStart"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="160dp"
+        android:layout_marginStart="158dp"
         android:layout_marginTop="42dp"
         android:padding="16dp"
         android:paddingLeft="32dp"
@@ -174,20 +174,19 @@
     <ProgressBar
         android:id="@+id/pbPumpProgress"
         style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="122dp"
+        android:layout_width="120dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="6dp"
+        android:layout_marginTop="16dp"
         android:layout_marginEnd="24dp"
-        android:indeterminateBehavior="repeat"
-        android:progressTint="@color/syringe"
+        android:indeterminateBehavior="cycle"
         android:scaleX="0.7"
         android:scaleY="5.8"
         app:layout_constraintBottom_toBottomOf="@+id/buttonStart"
         app:layout_constraintEnd_toStartOf="@+id/buttonStart"
-        app:layout_constraintHorizontal_bias="0.662"
+        app:layout_constraintHorizontal_bias="0.67"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/buttonStart"
-        app:layout_constraintVertical_bias="0.538" />
+        app:layout_constraintTop_toTopOf="@+id/buttonStart" />
 
     <TextView
         android:id="@+id/tvTaskRunning"
@@ -205,6 +204,7 @@
         android:id="@+id/ivSyringe"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
         android:layout_marginEnd="30dp"
         app:layout_constraintBottom_toBottomOf="@+id/pbPumpProgress"
         app:layout_constraintEnd_toStartOf="@+id/buttonStart"
