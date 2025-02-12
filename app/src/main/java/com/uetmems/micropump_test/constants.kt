@@ -3,6 +3,10 @@ package com.uetmems.micropump_test
 const val SCAN_TAG = "BLE_SCAN"
 const val LOCATION_TAG = "LOCATION_RESPONSE"
 const val CONNECT_TAG = "CONNECT_ESP"
+const val BLE_WRITE = "BLE_WRITE"
+
+const val STOP_PUMP = 0
+const val PAUSE_PUMP = 2
 
 val UUIDs: List<String> = listOf(
     //size = 6

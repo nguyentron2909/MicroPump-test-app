@@ -13,13 +13,41 @@
     <string name="tvtarget_unit">Enter target</string>
     <string name="button_start">Start</string>
     <string name="button_stop">Stop</string>
+    <string name="button_continue">Continue</string>
+    <string name="button_pause">Pause</string>
+
+    <string name="paused">Paused</string>
 
     <!--Sub layout strings -->
+    <!--Connect button names -->
     <string name="connect">Connect to Micropump</string>
     <string name="connecting">Connecting . . .</string>
     <string name="connected">Connected</string>
     <string name="disconnected">Disconnected</string>
     <string name="disconnect">Disconnect</string>
+
+    <!-- Toasts and dialogs  -->
+    <string name="enable_bt">Please enable bluetooth</string>
+
+    <string name="scan_failed">Could not initiate scanning</string>
+    <string name="no_device">Could not find Micropump, try again</string>
+    <string name="no_info">Please enter Rate / Target</string>
+    <string name="not_connect">Please connect to Micropump first</string>
+
+    <string name="bluetooth_turned_off">Bluetooth turned off, can\'t continue</string>
+    <string name="bluetooth_disconnected">Bluetooth device disconnected, can\'t continue</string>
+
+    <string name="finished_toast">Complete !</string>
+    <string name="finished_dialog">Task finished</string>
+    <string name="finished_message">The micropump has finished its task!
+        \nPressing return will make the mechanism move back to it\'s original position
+        \n\n*Please remove the syringe before pressing return
+        \n
+    </string>
+    <string name="finished_return">Return</string>
+    <string name="returning">Returning to original position</string>
+
+
 
     <!--Spinner string arrays-->
     <string-array name="rate_units">
@@ -46,6 +74,7 @@
     <string-array name="Operation_mode">
         <item>Infusing</item>
         <item>Withdrawing</item>
+
     </string-array>
 
 </resources>

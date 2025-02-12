@@ -149,16 +149,30 @@
         android:id="@+id/buttonStop"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="16dp"
         android:padding="16dp"
         android:paddingLeft="32dp"
         android:paddingRight="32dp"
-        android:text="@string/button_stop"
+        android:text="@string/button_pause"
         android:textColor="@color/black"
         android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="@+id/buttonStart"
         app:layout_constraintTop_toBottomOf="@+id/buttonStart" />
+
+    <TextView
+        android:id="@+id/tvTaskRunning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAlignment="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:textStyle="italic"
+        app:layout_constraintBottom_toBottomOf="@+id/buttonStop"
+        app:layout_constraintEnd_toEndOf="@+id/ivSyringe"
+        app:layout_constraintStart_toStartOf="@+id/ivSyringe"
+        app:layout_constraintTop_toTopOf="@+id/buttonStop"
+        app:layout_constraintVertical_bias="0.6"
+        tools:text="Paused" />
 
     <ImageView
         android:id="@+id/ivLogoUET"
@@ -188,18 +202,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/buttonStart" />
 
-    <TextView
-        android:id="@+id/tvTaskRunning"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="26dp"
-        android:textStyle="italic"
-        app:layout_constraintBottom_toBottomOf="@+id/buttonStop"
-        app:layout_constraintEnd_toEndOf="@+id/ivSyringe"
-        app:layout_constraintTop_toTopOf="@+id/buttonStop"
-        app:layout_constraintVertical_bias="0.6"
-        tools:text="Infusing in progress ..." />
-
     <ImageView
         android:id="@+id/ivSyringe"
         android:layout_width="0dp"
@@ -222,6 +224,7 @@
         android:layout_marginBottom="32dp"
         android:pointerIcon="none"
         android:text="@string/connect"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
         android:textColor="@color/black"
         android:textStyle="italic"
         app:icon="@android:drawable/stat_sys_data_bluetooth"

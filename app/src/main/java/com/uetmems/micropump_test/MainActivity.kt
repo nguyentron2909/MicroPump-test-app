@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothCodecStatus
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
@@ -54,9 +53,6 @@ import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.Task
 import java.util.UUID
 import kotlin.math.floor
-//import com.google.firebase.Firebase
-///import com.google.firebase.firestore.firestore
-
 
 class MainActivity : AppCompatActivity() {
 
@@ -73,12 +69,17 @@ class MainActivity : AppCompatActivity() {
         private var sendSucess = false
         private var ESP_ADDRESS = "null"
 
+        @RequiresApi(Build.VERSION_CODES.S)
         private val requiredPermissions = arrayOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.BLUETOOTH_SCAN
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
         )
     }
 
+    //UI
     private lateinit var etPumpSpeed : EditText
     private lateinit var etPumpVol : EditText
     private lateinit var spnRateUnit : Spinner
@@ -92,7 +93,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvTaskRunning: TextView
     private lateinit var tvConnectStatus :TextView
 
+    //timer
+    private var timeElapsed = 0
     //bluetooth LE functionalities
+    private var retryCount = 0
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var btnConnect : Button
 
@@ -100,8 +104,6 @@ class MainActivity : AppCompatActivity() {
     private val bluetoothLeScanner: BluetoothLeScanner? = bluetoothAdapter?.bluetoothLeScanner
     private var gattGlobal: BluetoothGatt? = null
     private lateinit var bluetoothLEDevice: BluetoothDevice
-    //firebase shitz
-    //private var db = Firebase.firestore
 
 
     @RequiresApi(Build.VERSION_CODES.S)
@@ -121,7 +123,6 @@ class MainActivity : AppCompatActivity() {
         {
             showNoBLECapability()
         }
-
 
         //request to access location permission
         if(!hasPermissions())
@@ -145,6 +146,10 @@ class MainActivity : AppCompatActivity() {
             requestPermissionsLauncher.launch(requiredPermissions)
         }
 
+        /*
+        //shortcut
+        showFinishedDialog()
+        */
 
         //items
         etPumpSpeed = findViewById(R.id.etPumpSpeed)
@@ -163,7 +168,6 @@ class MainActivity : AppCompatActivity() {
         tvConnectStatus = findViewById(R.id.tvConnectionStatus)
 
         // initialization
-
         updateConnectionStatus()
         //edit text
         etPumpSpeed.addTextChangedListener( object: TextWatcher{
@@ -294,6 +298,7 @@ class MainActivity : AppCompatActivity() {
             }.show()
     }
 
+    @RequiresApi(Build.VERSION_CODES.S)
     private fun hasPermissions() :Boolean
     {
         return requiredPermissions.all{
@@ -312,6 +317,8 @@ class MainActivity : AppCompatActivity() {
             var lauchOneRequest = true
             while (!bluetoothEnabled)
             {
+                checkPermission(Manifest.permission.BLUETOOTH_CONNECT, REQUEST_PERMISSIONS)
+
                 if (!bluetoothAdapter.isEnabled) {
                     //if bluetooth is not enabled
                     val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
@@ -377,42 +384,6 @@ class MainActivity : AppCompatActivity() {
         {
             scanForESP32()
         }
-        /*
-        AlertDialog.Builder(this)
-            .setTitle("Requesting permissions")
-            .setMessage("We need location and bluetooth to be on for the app to work")
-            .setPositiveButton("ok") {_,_ ->
-                val locationRequest = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY,SCAN_TIME)
-                    .setMinUpdateIntervalMillis(5000)
-                    .build()
-                val builder = LocationSettingsRequest.Builder()
-                    .addLocationRequest(locationRequest)
-                val client = LocationServices.getSettingsClient(this)
-                val task1: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
-
-                task1.addOnSuccessListener { locationSettingsResponse->
-                    Log.i(LOCATION_TAG,"location turned on! ${locationSettingsResponse}")
-                }
-                task1.addOnFailureListener { exception ->
-                    if (exception is ResolvableApiException) {
-                        // Location settings are not satisfied, but this can be fixed
-                        // by showing the user a dialog.
-                        try {
-                            // Show the dialog by calling startResolutionForResult(),
-                            // and check the result in onActivityResult().
-                            exception.startResolutionForResult(
-                                this@MainActivity,
-                                REQUEST_PERMISSIONS
-                            )
-                        } catch (sendEx: IntentSender.SendIntentException) {
-                            // Ignore the error.
-                        }
-                    }
-                }
-            }.show()
-
-
-        */
     }
 
     private fun checkPermission(permission: String, requestCode: Int) {
@@ -442,7 +413,7 @@ class MainActivity : AppCompatActivity() {
         }
         else {//if(requestCode == REQUEST_ENABLE_BT && resultCode != Activity.RESULT_OK) {
             Log.i(TAG,"bluetooth not enabled! @activityresult")
-            Toast.makeText(this,"pls enable bluetooth",Toast.LENGTH_SHORT).show()
+            Toast.makeText(this,R.string.enable_bt,Toast.LENGTH_SHORT).show()
             isGoodToStartScan = false
             requestBLEPermission()
         }
@@ -470,7 +441,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onScanFailed(errorCode: Int) {
-            Toast.makeText(this@MainActivity, "Cannot initiate scanning", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this@MainActivity, R.string.scan_failed, Toast.LENGTH_SHORT).show()
             Log.e(SCAN_TAG, "Scan failed with error: $errorCode")
             return
         }
@@ -486,7 +457,7 @@ class MainActivity : AppCompatActivity() {
             Log.w(SCAN_TAG, "cannot find device")
             Toast.makeText(
                 this,
-                "Cannot find device",
+                R.string.no_device,
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -545,7 +516,6 @@ class MainActivity : AppCompatActivity() {
                     btnConnect.isEnabled = false
                     btnConnect.setText(R.string.connecting)
                     scanForESP32()
-
                 }
                 updateConnectionStatus()
             }
@@ -586,12 +556,22 @@ class MainActivity : AppCompatActivity() {
         ) {
             if (status == BluetoothGatt.GATT_SUCCESS)
             {
-                Log.i(TAG,"write to ${characteristic?.uuid} succeeded !")
+                Log.d(BLE_WRITE,"Write to ${characteristic?.uuid} succeeded !")
                 sendSucess = true
             }
             else {
-                Log.e(CONNECT_TAG,"Value couldnt be sent to ${characteristic?.uuid}")
+                Log.e(BLE_WRITE,"Write failed ${characteristic?.uuid}: ${characteristic!!.value}, status: $status")
+                if (retryCount < 3){
+                    writeToESP(characteristic,characteristic.value)
+                    retryCount++
+                }
+                else {
+                    Log.e(BLE_WRITE,"Max attempt reached, skipping")
+                    retryCount = 0
+                }
+
                 sendSucess = false
+
             }
         }
     }
@@ -656,6 +636,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     @SuppressLint("MissingPermission")
     private fun startPump(time: Double){
         //error checking
@@ -663,12 +644,12 @@ class MainActivity : AppCompatActivity() {
             etPumpVol.text.isBlank() ||
             time <= 0)
         {
-            Toast.makeText(this,"Please enter Rate / Target ",Toast.LENGTH_SHORT).show()
+            Toast.makeText(this,R.string.no_info,Toast.LENGTH_SHORT).show()
             return
         }
 
         if (!isConnected){
-            Toast.makeText(this,"Please connect to Micropump first",Toast.LENGTH_SHORT).show()
+            Toast.makeText(this,R.string.not_connect,Toast.LENGTH_SHORT).show()
             return
         }
         else {
@@ -676,100 +657,59 @@ class MainActivity : AppCompatActivity() {
             Log.i(TAG, "Sending data to device: ${gattGlobal.toString()}")
             val dataToSend = parseData()
 
+            //write characteristics one by one
             for (i in 1..<UUIDs.size) {
                 /* number meaning
                 //1 = rate
                 //2 = target
                 //3 = syringe
                 //4 = mode
-                //5 = run
+                //5 = ispumping
                 */
 
-                //get the uuids, set write type
-                Log.d(TAG, "writing chars number $i");
+                //get the uuids
+                Log.i(BLE_WRITE, "Writing chars number $i");
                 val characteristicUUID = UUID.fromString(UUIDs[i])
-                val characteristic = gattGlobal?.getService(serviceUUID)?.getCharacteristic(characteristicUUID)
-                characteristic?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                val characteristic = gattGlobal?.getService(serviceUUID)
+                    ?.getCharacteristic(characteristicUUID)
 
-                var logOnlyOnce = true
-                while (!sendSucess && i != 1 )
-                {
-                    if (logOnlyOnce) {
-                        Log.d(TAG, "waiting for a success call")
-                        logOnlyOnce = false
-                    }
-                }
-                //begin writing
-                characteristic.let {
-                    //get a byte array of character set UTF-8
-                    val dataToWrite = dataToSend[i-1].toByteArray(Charsets.UTF_8)
-
-                    // Set the data to write (it = characteristics(var) )
-                    it?.value = dataToWrite
-
-                    // Write data
-                    val succ = gattGlobal?.writeCharacteristic(it)
-                    if (succ == true) {
-                        Log.d("BLE_WRITE", "Write no$i initiated")
-                        sendSucess = false //resetting the onCHarWrite listener
-                    } else {
-                        Log.d("BLE_WRITE", "Write no$i failed")
-                    }
-                }
+                //write data to characteristic
+                writeToESP(characteristic,dataToSend[i-1].toByteArray(Charsets.UTF_8))
             }
         }
-/*
-        //firebase stuff
-        val dataToSend = hashMapOf(
-            "Mode" to spinnerOPMode.selectedItem,
-            "Syringe" to spinnerSyringeType.selectedItem,
-            "Rate" to etPumpSpeed.text.toString().toDouble(),
-            "Target" to etPumpVol.text.toString().toDouble(),
-            "isRunning" to true,
-        )
-        Log.i(TAG,"bruhhhh : ${dataToSend.size}")
-
-        db.collection("test_q").document(CURRENT_USER)
-            .set(dataToSend)
-            .addOnCompleteListener {sendValuesTask ->
-                if(!sendValuesTask.isSuccessful)
-                {
-                    Log.e(TAG,"exeption in sending to firestore",sendValuesTask.exception)
-                    Toast.makeText(this, "failed to send to firestore",Toast.LENGTH_SHORT).show()
-                    return@addOnCompleteListener
-                }
-                Log.i(TAG, "data sent!")
-            }
-*/
-        //disable some functions
+        //update UI
+        btnConnect.isClickable = false
         buttonStart.isEnabled = false
         etPumpSpeed.isEnabled = false
         etPumpVol.isEnabled = false
         spinnerOPMode.isEnabled = false
         spinnerSyringeType.isEnabled = false
 
-        tvTaskRunning.text = buildString {
-            append(spinnerOPMode.selectedItem.toString())
-            append(" in progress ...")
-        }
+        tvTaskRunning.text = spinnerOPMode.selectedItem.toString()
 
+
+        //If everything sent successfully
         if (sendSucess) {
+            //make a timer
             val timer = object : CountDownTimer(floor(time).toLong() * 1000 + 1, 1000) {
                 override fun onTick(p0: Long) {
+                    //update the UI
                     updateTimeUI(p0.toDouble() / 1000)
-
-                    val percentageLeft = (p0 / floor(time).toLong() / 10).toInt()
-                    //Log.i(TAG,"%: $percentageLeft")
+                    val percentageLeft = (100 * (p0.toDouble() / (p0.toDouble() + timeElapsed*1000)) ).toInt()
                     pbPumpProgress.setProgress(percentageLeft, true)
+                    //add elapsed time
+                    timeElapsed++
+
+                    //Exception check
                     //if bluetooth is turned off
                     if (bluetoothAdapter?.isEnabled == false) {
-                        stopPump()
+                        stopPump(STOP_PUMP)
                         isConnected = false
                         btnConnect.setText(R.string.connect)
                         Log.e(TAG, "Bluetooth turned off")
                         Toast.makeText(
                             this@MainActivity,
-                            "Bluetooth turned off, cant continue",
+                            R.string.bluetooth_turned_off,
                             Toast.LENGTH_LONG
                         ).show()
 
@@ -783,15 +723,15 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     val btManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-                    //if is disconnected
+                    //if micro pump is disconnected, stop the pump
                     if (btManager.getConnectionState(bluetoothLEDevice,BluetoothProfile.GATT) == BluetoothProfile.STATE_DISCONNECTED) {
-                        stopPump()
+                        stopPump(STOP_PUMP)
                         isConnected = false
                         btnConnect.setText(R.string.connect)
                         Log.e(TAG, "Bluetooth device disconnected")
                         Toast.makeText(
                             this@MainActivity,
-                            "Bluetooth device disconnected, can't continue",
+                            R.string.bluetooth_disconnected,
                             Toast.LENGTH_LONG
                         ).show()
 
@@ -806,88 +746,130 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onFinish() {
-                    stopPump()
+                    Toast.makeText(this@MainActivity, R.string.finished_toast, Toast.LENGTH_LONG).show()
+                    stopPump(STOP_PUMP)
                     btnConnect.isEnabled = true
-                    //CURRENT_PROGRESS = FINISHED
-                    Toast.makeText(this@MainActivity, "Complete !", Toast.LENGTH_LONG).show()
+
                 }
             }.start()
 
             buttonStop.isEnabled = true
             buttonStop.setOnClickListener {
-                Log.i(TAG, "STOP button clicked")
-                stopPump()
+                //todo: make it so that it pauses and 1 more click make it stop in its original place
+                //todo change button lable to pause -> stop after pasing
+                //todo change start to continue after pausing
+                Log.i(TAG, "PAUSE button clicked")
+                Log.i(TAG, "Time elasped: $timeElapsed")
+                stopPump(PAUSE_PUMP)
+
                 timer.cancel()
             }
         }
     }
-    @SuppressLint("MissingPermission")
-    private fun stopPump() {
-        /*
-        //firebase stuff
-        val dataToSend = mapOf("isRunning" to false)
-        db.collection("test_q").document(CURRENT_USER)
-            .update(dataToSend)
-            .continueWith {dataUploadTask ->
-                Log.i(TAG,"")
-            }
-            .addOnCompleteListener{ stopPumpTask ->
-                if (!stopPumpTask.isSuccessful )
-                {
-                    Log.e(TAG, "exception when stopping the pump",stopPumpTask.exception)
-                    Toast.makeText(this, "Failed to send STOP command, please switch off the device",Toast.LENGTH_LONG).show()
-                    return@addOnCompleteListener
-                }
-                Log.i(TAG, "stopped the pump!")
 
-            }
-
-         */
-
-        if (sendSucess)
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun writeToESP(characteristic: BluetoothGattCharacteristic?, data: ByteArray) {
+        sendSucess = false
+        //begin writing
+        if (characteristic != null) {
+            gattGlobal?.writeCharacteristic(characteristic,data,BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE)
+        }
+        //wait for a success call before continue
+        var logOnlyOnce = true
+        while (!sendSucess)
         {
-            val serviceUUID = UUID.fromString(UUIDs[0])
-            Log.i(TAG, "Sending data to device: ${gattGlobal.toString()}")
-            val characteristicUUID = UUID.fromString(UUIDs[5]) // isRunning
-            val characteristic = gattGlobal?.getService(serviceUUID)?.getCharacteristic(characteristicUUID)
-            characteristic?.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-            characteristic.let {
-                //get a byte array of character set UTF-8
-                val isRunning = 0 
-                val dataToWrite = isRunning.toString().toByteArray(Charsets.UTF_8)
-
-                // Set the data to write (it = characteristics(var) )
-                it?.value = dataToWrite
-
-                // Write data
-                val succ = gattGlobal?.writeCharacteristic(it)
-                if (succ == true) {
-                    Log.d("BLE_WRITE", "Write initiated")
-                    sendSucess = false //resetting the onCHarWrite listener
-                } else {
-                    Log.d("BLE_WRITE", "Write failed")
-                }
+            if (logOnlyOnce) {
+                Log.i(BLE_WRITE, "Waiting for a success call")
+                logOnlyOnce = false
             }
         }
 
+    }
 
-        tvTaskRunning.text = " "
-        updateTimeUI(calculateTime())
-        pbPumpProgress.setProgress(START_PROGRESS,true)
+    private fun showFinishedDialog() {
+        val alertDialogBuilder = AlertDialog.Builder(this@MainActivity)
+        alertDialogBuilder.setTitle(R.string.finished_dialog)
+            .setIcon(R.mipmap.ic_launcher_round)
+            .setMessage(R.string.finished_message)
+            .setPositiveButton(R.string.finished_return) {dialog, which->
+                Log.i(TAG,"return pressed")
+                Toast.makeText(this@MainActivity,R.string.returning,Toast.LENGTH_LONG)
+                    .show()
+                dialog.cancel()
+            }
+            .show()
+    }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @SuppressLint("MissingPermission")
+    private fun stopPump(isPumping: Int) {
+        if(isPumping == STOP_PUMP) { //if it is stopped
+            //write to IsPumping 0
+            if (sendSucess) {
+                val serviceUUID = UUID.fromString(UUIDs[0])
+                Log.i(TAG, "Sending data to device: ${gattGlobal.toString()}")
+                val characteristicUUID = UUID.fromString(UUIDs[5]) // isRunning
+                val characteristic = gattGlobal?.getService(serviceUUID)?.getCharacteristic(characteristicUUID)
+                //get a byte array of character set UTF-8
+                val dataToWrite = isPumping.toString().toByteArray(Charsets.UTF_8)
+                writeToESP(characteristic,dataToWrite)
+            }
+            //resetting time elasped
+            timeElapsed = 0
 
-        //disable some function
-        buttonStop.isEnabled = false
-        buttonStop.isClickable = false
-        //re enable some functions
-        btnConnect.isEnabled = true
-        spinnerOPMode.isEnabled = true
-        spinnerSyringeType.isEnabled = true
-        buttonStart.isEnabled = true
-        buttonStart.isClickable = true
-        etPumpVol.isEnabled = true
-        etPumpSpeed.isEnabled = true
+            //update the UI
+            updateTimeUI(calculateTime())
+            tvTaskRunning.text = " "
+            pbPumpProgress.setProgress(START_PROGRESS,true)
+            //disable some function
+            buttonStop.isEnabled = false
+            buttonStop.isClickable = false
+            buttonStart.setText(R.string.button_start)
+            //re enable some
 
+            btnConnect.isClickable = true
+            btnConnect.isEnabled = true
+            spinnerOPMode.isEnabled = true
+            spinnerSyringeType.isEnabled = true
+            buttonStart.isEnabled = true
+            buttonStart.isClickable = true
+            etPumpVol.isEnabled = true
+            etPumpSpeed.isEnabled = true
+
+            showFinishedDialog()
+        }
+        else if (isPumping == PAUSE_PUMP) {
+            //if it is paused
+            //write to IsPumping 2
+            if (sendSucess) {
+                val serviceUUID = UUID.fromString(UUIDs[0])
+                Log.i(TAG, "Sending data to device: ${gattGlobal.toString()}")
+                val characteristicUUID = UUID.fromString(UUIDs[5]) // isRunning
+                val characteristic = gattGlobal?.getService(serviceUUID)?.getCharacteristic(characteristicUUID)
+                //get a byte array of character set UTF-8
+                val dataToWrite = isPumping.toString().toByteArray(Charsets.UTF_8)
+                writeToESP(characteristic,dataToWrite)
+            }
+            //update the UI **keep time elasped the same
+            updateTimeUI(calculateTime())
+            val originalTime = calculateTime() + timeElapsed
+            val currentProgress = floor(100 - (timeElapsed / originalTime)*100)
+            tvTaskRunning.setText(R.string.paused)
+            pbPumpProgress.setProgress(currentProgress.toInt(),true)
+
+            //re-enable some function
+            buttonStop.isEnabled = true
+            buttonStop.isClickable = true
+            buttonStop.setText(R.string.button_stop)
+            buttonStop.setOnClickListener{
+                Log.i(TAG,"STOP clicked")
+                buttonStop.setText(R.string.button_pause)
+                stopPump(STOP_PUMP)
+            }
+            buttonStart.isEnabled = true
+            buttonStart.isClickable = true
+            buttonStart.setText(R.string.button_continue)
+        }
 
     }
     private fun updateTimeUI(timeCalc :Double) {
@@ -937,11 +919,11 @@ class MainActivity : AppCompatActivity() {
         val rate = etPumpSpeed.text.toString().toDouble()
         val vol = etPumpVol.text.toString().toDouble()
         val rateUnit:Double = when (spnRateUnit.selectedItemPosition) {
-            0 -> 1.0 / 60.0 // ml/min
-            1 -> 1.0        //ml/s
-            2 -> 1e-3 / 3600//ul/h
-            3 -> 1e-3 / 60  //ul/min
-            4 -> 1e-3       //ul/s
+            0 -> 1.0 / 60.0     // ml/min
+            1 -> 1.0            //ml/s
+            2 -> 1e-3 / 3600    //ul/h
+            3 -> 1e-3 / 60      //ul/min
+            4 -> 1e-3           //ul/s
 
             else -> -1.0 //error
         }
@@ -955,7 +937,7 @@ class MainActivity : AppCompatActivity() {
         //val mode = spinnerOPMode.selectedItem.toString()
 
         //calculate time
-        val timeCalc = (vol * volUnit) / (rate * rateUnit)
+        val timeCalc = (vol * volUnit) / (rate * rateUnit) + 1 - timeElapsed
         Log.i(TAG,"timecalc: $timeCalc")
         return timeCalc
     }
